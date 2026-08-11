@@ -5,11 +5,14 @@ import { Container } from "@/components/shared/container";
 import { MapView } from "@/components/shared/map-view";
 import { RideStatusBadge } from "@/components/rides/ride-status-badge";
 import { CancelRideButton } from "@/components/rides/cancel-ride-button";
+import { RealtimeRideWatcher } from "@/components/rides/realtime-ride-watcher";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatNpr } from "@/lib/fare";
 import { requireRiderState } from "@/lib/supabase/require-rider";
 import { getRideById } from "@/lib/rides/queries";
+import { RideProgressActions } from "./ride-progress-actions";
+import { LocationBroadcaster } from "./location-broadcaster";
 
 export const metadata: Metadata = { title: "Ride Details" };
 
@@ -27,6 +30,9 @@ export default async function RiderRideDetailPage({ params }: PageProps<"/rider/
 
   return (
     <Container className="max-w-lg py-6 sm:py-8">
+      <RealtimeRideWatcher rideId={ride.id} />
+      <LocationBroadcaster rideId={ride.id} status={ride.status} />
+
       <div className="flex items-center justify-between">
         <h1 className="text-lg font-semibold">Ride Details</h1>
         <RideStatusBadge status={ride.status} />
@@ -92,11 +98,10 @@ export default async function RiderRideDetailPage({ params }: PageProps<"/rider/
         </CardContent>
       </Card>
 
-      {canCancel ? (
-        <div className="mt-4">
-          <CancelRideButton rideId={ride.id} />
-        </div>
-      ) : null}
+      <div className="mt-4 space-y-3">
+        <RideProgressActions rideId={ride.id} status={ride.status} />
+        {canCancel ? <CancelRideButton rideId={ride.id} /> : null}
+      </div>
     </Container>
   );
 }

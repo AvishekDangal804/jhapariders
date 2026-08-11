@@ -118,13 +118,18 @@ export function BookingFlow() {
       .select("id")
       .single();
 
-    setSubmitting(false);
-
     if (error || !ride) {
+      setSubmitting(false);
       toast.error("Couldn't create your ride. Please try again.");
       return;
     }
 
+    // Kick off matching immediately — finds nearby online/verified riders
+    // and notifies them. If nobody's eligible right now the RPC itself
+    // marks the ride no_driver_found, which the ride detail page shows.
+    await supabase.rpc("request_ride_matching", { p_ride_id: ride.id });
+
+    setSubmitting(false);
     router.push(`/passenger/ride/${ride.id}`);
   }
 
