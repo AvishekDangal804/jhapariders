@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Check, Crosshair, MapPin, Search } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Check, Crosshair, Loader2, MapPin, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { jhapaServiceAreas } from "@/config/service-areas";
+import { isMapboxConfigured, searchAddress, type GeocodeSuggestion } from "@/lib/maps/geocoding";
 import { cn } from "@/lib/utils";
 import type { Address } from "@/types";
 
@@ -30,8 +31,38 @@ export function LocationPicker({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [locating, setLocating] = useState(false);
+  const [suggestions, setSuggestions] = useState<GeocodeSuggestion[]>([]);
+  const [searching, setSearching] = useState(false);
 
-  const filtered = areas.filter((a) => a.name.toLowerCase().includes(query.toLowerCase()));
+  const filteredAreas = areas.filter((a) => a.name.toLowerCase().includes(query.toLowerCase()));
+
+  useEffect(() => {
+    if (!isMapboxConfigured || query.trim().length < 3) return;
+
+    let cancelled = false;
+    const handle = setTimeout(() => {
+      searchAddress(query).then((results) => {
+        if (!cancelled) {
+          setSuggestions(results);
+          setSearching(false);
+        }
+      });
+    }, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(handle);
+    };
+  }, [query]);
+
+  function handleQueryChange(next: string) {
+    setQuery(next);
+    if (!isMapboxConfigured || next.trim().length < 3) {
+      setSuggestions([]);
+      setSearching(false);
+    } else {
+      setSearching(true);
+    }
+  }
 
   function useCurrentLocation() {
     if (!navigator.geolocation) return;
@@ -73,10 +104,10 @@ export function LocationPicker({
             <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
               autoFocus
-              placeholder="Search Jhapa towns..."
+              placeholder={isMapboxConfigured ? "Search for an address..." : "Search Jhapa towns..."}
               className="h-9 pl-8"
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => handleQueryChange(e.target.value)}
             />
           </div>
         </div>
@@ -91,11 +122,43 @@ export function LocationPicker({
             {locating ? "Locating..." : "Use current location"}
           </button>
         ) : null}
+
+        {isMapboxConfigured && query.trim().length >= 3 ? (
+          <div className="max-h-64 overflow-y-auto border-b p-1">
+            {searching ? (
+              <div className="flex items-center justify-center gap-2 py-4 text-sm text-muted-foreground">
+                <Loader2 className="size-3.5 animate-spin" />
+                Searching...
+              </div>
+            ) : suggestions.length === 0 ? (
+              <p className="px-3 py-4 text-center text-sm text-muted-foreground">No results</p>
+            ) : (
+              suggestions.map((s) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => {
+                    onChange({ address: s.address, lat: s.lat, lng: s.lng });
+                    setOpen(false);
+                  }}
+                  className="flex w-full items-start gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-accent"
+                >
+                  <MapPin className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
+                  <span className="truncate">{s.address}</span>
+                </button>
+              ))
+            )}
+          </div>
+        ) : null}
+
         <div className="max-h-64 overflow-y-auto p-1">
-          {filtered.length === 0 ? (
+          <p className="px-3 pt-2 pb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            Popular in Jhapa
+          </p>
+          {filteredAreas.length === 0 ? (
             <p className="px-3 py-4 text-center text-sm text-muted-foreground">No matching towns</p>
           ) : (
-            filtered.map((area) => (
+            filteredAreas.map((area) => (
               <button
                 key={area.slug}
                 type="button"

@@ -1,14 +1,15 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { GeoPoint } from "@/types";
 
 // Provider-agnostic map surface. When `NEXT_PUBLIC_MAPBOX_TOKEN` is set this
-// should render the real Mapbox map (wired up in Phase 7 alongside the
-// Directions API integration); until then — and whenever the token is
-// missing in any environment — it renders a lightweight demo fallback so the
-// app never crashes or blocks on a missing API key.
+// renders the real Mapbox map (see mapbox-map-view.tsx); otherwise — and
+// whenever the token is missing in any environment — it renders a
+// lightweight demo fallback so the app never crashes or blocks on a missing
+// API key (see DemoMapView below).
 export interface MapMarker extends GeoPoint {
   id: string;
   label: string;
@@ -23,13 +24,21 @@ interface MapViewProps {
 
 const hasMapboxToken = Boolean(process.env.NEXT_PUBLIC_MAPBOX_TOKEN);
 
+// mapbox-gl touches `window` on import, so it's loaded client-side only.
+const MapboxMapView = dynamic(
+  () => import("./mapbox-map-view").then((mod) => mod.MapboxMapView),
+  { ssr: false, loading: () => <div className="aspect-4/3 w-full animate-pulse rounded-2xl bg-muted" /> }
+);
+
 export function MapView({ markers = [], bounds, className }: MapViewProps) {
   if (hasMapboxToken) {
-    // TODO(Phase 7): render react-map-gl / mapbox-gl using
-    // NEXT_PUBLIC_MAPBOX_TOKEN. Falls through to the demo view until then so
-    // the component works today regardless of provider status.
+    return <MapboxMapView markers={markers} className={className} />;
   }
 
+  return <DemoMapView markers={markers} bounds={bounds} className={className} />;
+}
+
+function DemoMapView({ markers = [], bounds, className }: MapViewProps) {
   const computedBounds = bounds ?? computeBounds(markers);
 
   return (

@@ -1,17 +1,15 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Bike, Car, Loader2, Package } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Bike, Car, Loader2, Package } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { LocationPicker } from "@/components/shared/location-picker";
 import { FareCard } from "@/components/rides/fare-card";
 import { createClient } from "@/lib/supabase/client";
-import { estimateFare } from "@/lib/fare";
-import { haversineKm, estimateDurationMinutes } from "@/lib/geo/haversine";
 import { cn } from "@/lib/utils";
-import type { Address, ServiceType } from "@/types";
+import type { Address, FareBreakdown, ServiceType } from "@/types";
 
 const STEPS = ["pickup", "destination", "service", "review"] as const;
 type Step = (typeof STEPS)[number];
@@ -20,6 +18,12 @@ const services: { value: Exclude<ServiceType, "parcel">; label: string; icon: ty
   { value: "bike", label: "Bike", icon: Bike },
   { value: "car", label: "Car", icon: Car },
 ];
+
+interface FareApiResult {
+  fare: FareBreakdown;
+  distanceKm: number;
+  durationMinutes: number;
+}
 
 export function BookingFlow() {
   const router = useRouter();
@@ -32,25 +36,39 @@ export function BookingFlow() {
   const [serviceType, setServiceType] = useState<Exclude<ServiceType, "parcel">>(initialService);
   const [submitting, setSubmitting] = useState(false);
 
+  const [fareResult, setFareResult] = useState<FareApiResult | null>(null);
+  const [fareLoading, setFareLoading] = useState(false);
+  const [fareError, setFareError] = useState<string | null>(null);
+
   const step: Step = STEPS[stepIndex];
 
-  const distanceKm = useMemo(() => {
-    if (!pickup || !destination) return 0;
-    return haversineKm(pickup, destination);
-  }, [pickup, destination]);
+  // The server (/api/fare) is the only source of truth for pricing — it
+  // reads live rates from the database. Fetched on-demand when entering the
+  // review step, triggered from the Continue click handler below (not an
+  // effect) so the loading/error state updates aren't cascading renders.
+  async function loadFare() {
+    if (!pickup || !destination) return;
 
-  const durationMinutes = useMemo(
-    () => (distanceKm > 0 ? estimateDurationMinutes(distanceKm, serviceType) : 0),
-    [distanceKm, serviceType]
-  );
+    setFareLoading(true);
+    setFareError(null);
+    setFareResult(null);
 
-  const fare = useMemo(
-    () =>
-      distanceKm > 0
-        ? estimateFare({ serviceType, distanceKm, durationMinutes })
-        : null,
-    [serviceType, distanceKm, durationMinutes]
-  );
+    try {
+      const res = await fetch("/api/fare", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pickup, destination, serviceType }),
+      });
+      if (!res.ok) {
+        throw new Error((await res.json().catch(() => null))?.error ?? "Couldn't calculate fare");
+      }
+      setFareResult((await res.json()) as FareApiResult);
+    } catch (err) {
+      setFareError(err instanceof Error ? err.message : "Couldn't calculate fare");
+    } finally {
+      setFareLoading(false);
+    }
+  }
 
   function canContinue() {
     if (step === "pickup") return !!pickup;
@@ -59,14 +77,17 @@ export function BookingFlow() {
   }
 
   function goNext() {
-    if (stepIndex < STEPS.length - 1) setStepIndex(stepIndex + 1);
+    if (stepIndex >= STEPS.length - 1) return;
+    const nextIndex = stepIndex + 1;
+    setStepIndex(nextIndex);
+    if (STEPS[nextIndex] === "review") loadFare();
   }
   function goBack() {
     if (stepIndex > 0) setStepIndex(stepIndex - 1);
   }
 
   async function confirmRide() {
-    if (!pickup || !destination || !fare) return;
+    if (!pickup || !destination || !fareResult) return;
     setSubmitting(true);
 
     const supabase = createClient();
@@ -90,9 +111,9 @@ export function BookingFlow() {
         destination_address: destination.address,
         destination_lat: destination.lat,
         destination_lng: destination.lng,
-        distance_km: distanceKm,
-        estimated_duration_minutes: durationMinutes,
-        estimated_fare: fare.total,
+        distance_km: fareResult.distanceKm,
+        estimated_duration_minutes: fareResult.durationMinutes,
+        estimated_fare: fareResult.fare.total,
       })
       .select("id")
       .single();
@@ -182,7 +203,7 @@ export function BookingFlow() {
         </div>
       ) : null}
 
-      {step === "review" && fare ? (
+      {step === "review" ? (
         <div className="space-y-4">
           <h1 className="text-lg font-semibold">Review your ride</h1>
           <div className="rounded-2xl border p-4 text-sm">
@@ -190,17 +211,37 @@ export function BookingFlow() {
             <p className="font-medium">{pickup?.address}</p>
             <p className="mt-3 text-muted-foreground">Destination</p>
             <p className="font-medium">{destination?.address}</p>
-            <p className="mt-3 text-xs text-muted-foreground">
-              ~{distanceKm.toFixed(1)} km &middot; ~{Math.round(durationMinutes)} min
-            </p>
+            {fareResult ? (
+              <p className="mt-3 text-xs text-muted-foreground">
+                ~{fareResult.distanceKm.toFixed(1)} km &middot; ~{Math.round(fareResult.durationMinutes)} min
+              </p>
+            ) : null}
           </div>
-          <FareCard fare={fare} />
+
+          {fareLoading ? (
+            <div className="flex items-center justify-center gap-2 rounded-2xl border py-8 text-sm text-muted-foreground">
+              <Loader2 className="size-4 animate-spin" />
+              Calculating fare...
+            </div>
+          ) : fareError ? (
+            <div className="flex items-center gap-2 rounded-2xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+              <AlertTriangle className="size-4 shrink-0" />
+              {fareError}
+            </div>
+          ) : fareResult ? (
+            <FareCard fare={fareResult.fare} />
+          ) : null}
         </div>
       ) : null}
 
       <div className="mt-8">
         {step === "review" ? (
-          <Button className="w-full" size="lg" onClick={confirmRide} disabled={submitting}>
+          <Button
+            className="w-full"
+            size="lg"
+            onClick={confirmRide}
+            disabled={submitting || fareLoading || !fareResult}
+          >
             {submitting ? <Loader2 className="size-4 animate-spin" /> : null}
             Confirm Ride
           </Button>
