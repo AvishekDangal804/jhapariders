@@ -29,7 +29,7 @@ export async function proxy(request: NextRequest) {
       .eq("id", user.id)
       .maybeSingle<{ role: UserRole; status: UserStatus }>();
 
-    if (profile?.status === "suspended") {
+    if (profile?.status === "suspended" || profile?.status === "deleted") {
       await supabase.auth.signOut();
       const redirectUrl = new URL("/login", request.url);
       redirectUrl.searchParams.set("suspended", "1");

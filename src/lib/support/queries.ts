@@ -52,6 +52,7 @@ export async function getAllTickets(): Promise<SupportTicketRow[]> {
     .from("support_tickets")
     .select("id, category, subject, status, created_at, updated_at, user:profiles!support_tickets_user_id_fkey(full_name)")
     .order("updated_at", { ascending: false })
+    .limit(200)
     .returns<RawTicketRow[]>();
 
   return (data ?? []).map((row) => ({

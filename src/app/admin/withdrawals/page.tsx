@@ -40,6 +40,7 @@ export default async function AdminWithdrawalsPage() {
       "id, amount, payment_method, account_reference, status, requested_at, rider:profiles!withdrawals_rider_id_fkey(full_name)"
     )
     .order("requested_at", { ascending: false })
+    .limit(200)
     .returns<WithdrawalRow[]>();
 
   const withdrawals = data ?? [];

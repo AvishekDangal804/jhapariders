@@ -38,6 +38,7 @@ export async function getCoupons(): Promise<Coupon[]> {
     .from("coupons")
     .select("id, code, discount_type, discount_value, minimum_fare, maximum_discount, usage_limit, usage_count, expiry_date, is_active, created_at")
     .order("created_at", { ascending: false })
+    .limit(200)
     .returns<CouponRow[]>();
 
   return (data ?? []).map(mapCoupon);

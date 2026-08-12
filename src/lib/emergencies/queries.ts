@@ -41,6 +41,7 @@ export async function getEmergencyEvents(): Promise<EmergencyEventRow[]> {
       "id, ride_id, lat, lng, description, status, created_at, resolved_at, reporter:profiles!emergency_events_user_id_fkey(full_name), ride:rides!emergency_events_ride_id_fkey(pickup_address, destination_address)"
     )
     .order("created_at", { ascending: false })
+    .limit(200)
     .returns<RawRow[]>();
 
   return (data ?? []).map((row) => ({
