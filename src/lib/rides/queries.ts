@@ -7,6 +7,7 @@ const RIDE_SELECT = `
   pickup_address, pickup_lat, pickup_lng,
   destination_address, destination_lat, destination_lng,
   distance_km, estimated_duration_minutes, estimated_fare, final_fare,
+  commission_rate, platform_share, rider_share,
   status, payment_status, payment_method,
   created_at, accepted_at, started_at, completed_at, cancelled_at,
   rider:profiles!rides_rider_id_fkey(full_name),
@@ -28,6 +29,9 @@ interface RideRow {
   estimated_duration_minutes: number | null;
   estimated_fare: number | null;
   final_fare: number | null;
+  commission_rate: number | null;
+  platform_share: number | null;
+  rider_share: number | null;
   status: Ride["status"];
   payment_status: Ride["paymentStatus"];
   payment_method: Ride["paymentMethod"];
@@ -62,6 +66,9 @@ function mapRide(row: RideRow): Ride {
     estimatedDurationMinutes: row.estimated_duration_minutes,
     estimatedFare: row.estimated_fare,
     finalFare: row.final_fare,
+    commissionRate: row.commission_rate,
+    platformShare: row.platform_share,
+    riderShare: row.rider_share,
     status: row.status,
     paymentStatus: row.payment_status,
     paymentMethod: row.payment_method,
@@ -79,6 +86,7 @@ const ACTIVE_STATUSES = [
   "driver_arriving",
   "driver_arrived",
   "ride_started",
+  "ride_completed",
   "payment_pending",
 ] as const;
 

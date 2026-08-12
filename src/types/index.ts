@@ -116,6 +116,9 @@ export interface Ride {
   estimatedDurationMinutes: number | null;
   estimatedFare: number | null;
   finalFare: number | null;
+  commissionRate: number | null;
+  platformShare: number | null;
+  riderShare: number | null;
   status: RideStatus;
   paymentStatus: PaymentStatus;
   paymentMethod: PaymentMethod | null;

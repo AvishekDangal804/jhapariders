@@ -17,16 +17,21 @@ const TYPE_LABEL: Record<string, string> = {
 export async function WalletPageContent({
   ownerType,
   ownerId,
+  action,
 }: {
   ownerType: "passenger" | "rider";
   ownerId: string;
+  action?: React.ReactNode;
 }) {
   const wallet = await getWallet(ownerType, ownerId);
   const transactions = wallet ? await getWalletTransactions(wallet.id) : [];
 
   return (
     <Container className="max-w-lg py-6 sm:py-8">
-      <h1 className="text-lg font-semibold">Wallet</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-lg font-semibold">Wallet</h1>
+        {action}
+      </div>
       <div className="mt-4">
         <WalletCard balance={wallet?.balance ?? 0} />
       </div>

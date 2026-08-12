@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { Navigation, MapPin as MapPinIcon } from "lucide-react";
+import { CheckCircle2, Clock3, Navigation, MapPin as MapPinIcon } from "lucide-react";
 import { Container } from "@/components/shared/container";
 import { MapView } from "@/components/shared/map-view";
 import { RideStatusBadge } from "@/components/rides/ride-status-badge";
@@ -51,6 +51,24 @@ export default async function RiderRideDetailPage({ params }: PageProps<"/rider/
           },
         ]}
       />
+
+      {ride.status === "ride_completed" ? (
+        <Card className="mt-4 border-primary/30 bg-primary/5">
+          <CardContent className="flex items-center gap-3 py-4">
+            <Clock3 className="size-5 shrink-0 text-primary" />
+            <p className="text-sm font-semibold">Waiting for the passenger to complete payment&hellip;</p>
+          </CardContent>
+        </Card>
+      ) : ride.status === "paid" ? (
+        <Card className="mt-4 border-primary/30 bg-primary/5">
+          <CardContent className="flex items-center gap-3 py-4">
+            <CheckCircle2 className="size-5 shrink-0 text-primary" />
+            <p className="text-sm font-semibold">
+              Payment received{ride.riderShare != null ? ` — you earned ${formatNpr(ride.riderShare)}` : ""}.
+            </p>
+          </CardContent>
+        </Card>
+      ) : null}
 
       {ride.passengerName ? (
         <Card className="mt-4">

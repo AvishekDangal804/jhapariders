@@ -15,6 +15,7 @@ import { requireProfile } from "@/lib/supabase/require-profile";
 import { createClient } from "@/lib/supabase/server";
 import { getRideById } from "@/lib/rides/queries";
 import type { MapMarker } from "@/components/shared/map-view";
+import { PaymentActions } from "./payment-actions";
 
 export const metadata: Metadata = { title: "Your Ride" };
 
@@ -99,13 +100,15 @@ export default async function RideDetailPage({ params }: PageProps<"/passenger/r
         </Card>
       ) : null}
 
-      {ride.status === "ride_completed" || ride.status === "paid" ? (
+      {ride.status === "paid" ? (
         <Card className="mt-4 border-primary/30 bg-primary/5">
           <CardContent className="flex items-center gap-3 py-4">
             <CheckCircle2 className="size-5 shrink-0 text-primary" />
             <p className="text-sm font-semibold">Ride completed. Thanks for riding with JhapaRide!</p>
           </CardContent>
         </Card>
+      ) : ride.status === "ride_completed" ? (
+        <PaymentActions rideId={ride.id} fare={fare ?? 0} />
       ) : statusMessage ? (
         <Card className="mt-4">
           <CardContent className="py-4 text-sm">{statusMessage}</CardContent>
