@@ -37,12 +37,15 @@ export async function getAdminOverviewStats(): Promise<AdminOverviewStats> {
       .eq("verification_status", "approved"),
     supabase.from("rider_profiles").select("id", { count: "exact", head: true }).eq("is_online", true),
     supabase.from("rides").select("id", { count: "exact", head: true }).gte("created_at", startOfDayIso),
-    supabase.from("rides").select("id", { count: "exact", head: true }).eq("status", "ride_completed"),
+    // A ride's status moves from 'ride_completed' to 'paid' once payment
+    // succeeds (Phase 9), so "completed" here has to include both — filtering
+    // on 'ride_completed' alone silently drops every ride the moment it's paid.
+    supabase.from("rides").select("id", { count: "exact", head: true }).in("status", ["ride_completed", "paid"]),
     supabase.from("rides").select("id", { count: "exact", head: true }).eq("status", "cancelled"),
     supabase
       .from("rides")
       .select("final_fare, platform_share")
-      .eq("status", "ride_completed")
+      .in("status", ["ride_completed", "paid"])
       .gte("completed_at", startOfDayIso)
       .returns<{ final_fare: number | null; platform_share: number | null }[]>(),
   ]);

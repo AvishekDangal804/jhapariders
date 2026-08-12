@@ -63,6 +63,16 @@ export function LoginForm() {
       if (profile?.role && !searchParams.get("next")) destination = roleHome[profile.role];
     }
 
+    try {
+      const pendingReferralCode = window.localStorage.getItem("jhaparide_referral_code");
+      if (pendingReferralCode) {
+        await supabase.rpc("redeem_referral_code", { p_code: pendingReferralCode });
+        window.localStorage.removeItem("jhaparide_referral_code");
+      }
+    } catch {
+      // best-effort — a failed/duplicate redemption shouldn't block login
+    }
+
     toast.success("Welcome back!");
     router.push(destination);
     router.refresh();

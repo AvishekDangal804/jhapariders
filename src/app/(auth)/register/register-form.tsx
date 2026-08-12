@@ -21,10 +21,13 @@ const roles: { value: Extract<UserRole, "passenger" | "rider">; label: string; d
   { value: "rider", label: "Rider", description: "Earn by driving" },
 ];
 
+const REFERRAL_STORAGE_KEY = "jhaparide_referral_code";
+
 export function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialRole = searchParams.get("role") === "rider" ? "rider" : "passenger";
+  const referralCode = searchParams.get("ref");
   const [submitting, setSubmitting] = useState(false);
   const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
   const [role, setRole] = useState<Extract<UserRole, "passenger" | "rider">>(initialRole);
@@ -63,12 +66,31 @@ export function RegisterForm() {
       return;
     }
 
+    if (referralCode) {
+      try {
+        window.localStorage.setItem(REFERRAL_STORAGE_KEY, referralCode);
+      } catch {
+        // localStorage unavailable (private browsing etc.) — redemption on
+        // next login still works if the session below succeeds instead.
+      }
+    }
+
     // If email confirmation is required, `session` is null and the account
     // isn't usable yet — show a "check your email" state instead of
-    // redirecting into a session that doesn't exist.
+    // redirecting into a session that doesn't exist. The stored code (if
+    // any) gets redeemed by <ReferralRedeemer> on first login.
     if (!data.session) {
       setSubmittedEmail(values.email);
       return;
+    }
+
+    if (referralCode) {
+      await supabase.rpc("redeem_referral_code", { p_code: referralCode });
+      try {
+        window.localStorage.removeItem(REFERRAL_STORAGE_KEY);
+      } catch {
+        // best-effort cleanup
+      }
     }
 
     toast.success("Account created!");

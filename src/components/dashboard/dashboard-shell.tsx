@@ -18,6 +18,8 @@ import {
   Settings,
   ShieldCheck,
   Star,
+  Ticket,
+  TrendingUp,
   User as UserIcon,
   Users,
   Wallet,
@@ -57,6 +59,8 @@ const ICONS = {
   Settings,
   ShieldCheck,
   Star,
+  Ticket,
+  TrendingUp,
   Users,
   Wallet,
 } as const;

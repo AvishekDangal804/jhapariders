@@ -81,6 +81,8 @@ export type ReportStatus = "open" | "investigating" | "resolved" | "dismissed";
 
 export type EmergencyStatus = "active" | "acknowledged" | "resolved";
 
+export type ReferralStatus = "pending" | "completed";
+
 export interface GeoPoint {
   lat: number;
   lng: number;
@@ -123,6 +125,8 @@ export interface Ride {
   commissionRate: number | null;
   platformShare: number | null;
   riderShare: number | null;
+  couponId: string | null;
+  discountAmount: number;
   status: RideStatus;
   paymentStatus: PaymentStatus;
   paymentMethod: PaymentMethod | null;
@@ -200,4 +204,37 @@ export interface EmergencyEvent {
   status: EmergencyStatus;
   createdAt: string;
   resolvedAt: string | null;
+}
+
+export interface Coupon {
+  id: string;
+  code: string;
+  discountType: CouponDiscountType;
+  discountValue: number;
+  minimumFare: number;
+  maximumDiscount: number | null;
+  usageLimit: number | null;
+  usageCount: number;
+  expiryDate: string | null;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface Referral {
+  id: string;
+  referrerId: string;
+  code: string;
+  referredUserId: string | null;
+  referredUserName: string | null;
+  referredRole: UserRole;
+  status: ReferralStatus;
+  createdAt: string;
+  completedAt: string | null;
+}
+
+export interface ReferralReward {
+  id: string;
+  referralId: string;
+  amount: number;
+  createdAt: string;
 }

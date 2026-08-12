@@ -7,7 +7,7 @@ const RIDE_SELECT = `
   pickup_address, pickup_lat, pickup_lng,
   destination_address, destination_lat, destination_lng,
   distance_km, estimated_duration_minutes, estimated_fare, final_fare,
-  commission_rate, platform_share, rider_share,
+  commission_rate, platform_share, rider_share, coupon_id, discount_amount,
   status, payment_status, payment_method,
   created_at, accepted_at, started_at, completed_at, cancelled_at,
   rider:profiles!rides_rider_id_fkey(full_name),
@@ -32,6 +32,8 @@ interface RideRow {
   commission_rate: number | null;
   platform_share: number | null;
   rider_share: number | null;
+  coupon_id: string | null;
+  discount_amount: number;
   status: Ride["status"];
   payment_status: Ride["paymentStatus"];
   payment_method: Ride["paymentMethod"];
@@ -69,6 +71,8 @@ function mapRide(row: RideRow): Ride {
     commissionRate: row.commission_rate,
     platformShare: row.platform_share,
     riderShare: row.rider_share,
+    couponId: row.coupon_id,
+    discountAmount: row.discount_amount,
     status: row.status,
     paymentStatus: row.payment_status,
     paymentMethod: row.payment_method,

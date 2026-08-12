@@ -7,6 +7,8 @@ export const adminNav: DashboardNavItem[] = [
   { label: "Rides", href: "/admin/rides", icon: "Car" },
   { label: "Payments", href: "/admin/payments", icon: "CreditCard" },
   { label: "Withdrawals", href: "/admin/withdrawals", icon: "Wallet" },
+  { label: "Analytics", href: "/admin/analytics", icon: "TrendingUp" },
+  { label: "Coupons", href: "/admin/coupons", icon: "Ticket" },
   { label: "Emergencies", href: "/admin/emergencies", icon: "AlertTriangle" },
   { label: "Support", href: "/admin/support", icon: "LifeBuoy" },
   { label: "Pricing", href: "/admin/pricing", icon: "Package" },

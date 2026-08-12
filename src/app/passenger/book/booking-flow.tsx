@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { AlertTriangle, ArrowLeft, Bike, Car, Loader2, Package } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Bike, Car, Loader2, Package, Tag, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { LocationPicker } from "@/components/shared/location-picker";
 import { FareCard } from "@/components/rides/fare-card";
 import { createClient } from "@/lib/supabase/client";
@@ -40,6 +41,11 @@ export function BookingFlow() {
   const [fareLoading, setFareLoading] = useState(false);
   const [fareError, setFareError] = useState<string | null>(null);
 
+  const [couponInput, setCouponInput] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number } | null>(null);
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponError, setCouponError] = useState<string | null>(null);
+
   const step: Step = STEPS[stepIndex];
 
   // The server (/api/fare) is the only source of truth for pricing — it
@@ -68,6 +74,32 @@ export function BookingFlow() {
     } finally {
       setFareLoading(false);
     }
+  }
+
+  async function applyCoupon() {
+    if (!couponInput.trim() || !fareResult) return;
+    setCouponLoading(true);
+    setCouponError(null);
+
+    const supabase = createClient();
+    const { data, error } = await supabase.rpc("preview_coupon_discount", {
+      p_code: couponInput.trim(),
+      p_fare: fareResult.fare.total,
+    });
+    setCouponLoading(false);
+
+    if (error || data == null) {
+      setCouponError(error?.message || "Invalid coupon code");
+      return;
+    }
+    setAppliedCoupon({ code: couponInput.trim(), discount: data as number });
+    toast.success("Coupon applied!");
+  }
+
+  function removeCoupon() {
+    setAppliedCoupon(null);
+    setCouponInput("");
+    setCouponError(null);
   }
 
   function canContinue() {
@@ -122,6 +154,16 @@ export function BookingFlow() {
       setSubmitting(false);
       toast.error("Couldn't create your ride. Please try again.");
       return;
+    }
+
+    if (appliedCoupon) {
+      const { error: couponRpcError } = await supabase.rpc("apply_coupon_to_ride", {
+        p_ride_id: ride.id,
+        p_code: appliedCoupon.code,
+      });
+      if (couponRpcError) {
+        toast.warning(`Ride booked, but the coupon couldn't be applied: ${couponRpcError.message}`);
+      }
     }
 
     // Kick off matching immediately — finds nearby online/verified riders
@@ -234,7 +276,57 @@ export function BookingFlow() {
               {fareError}
             </div>
           ) : fareResult ? (
-            <FareCard fare={fareResult.fare} />
+            <>
+              {appliedCoupon ? (
+                <div className="flex items-center justify-between rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-sm">
+                  <span className="flex items-center gap-2 font-medium text-primary">
+                    <Tag className="size-4" />
+                    {appliedCoupon.code} applied
+                  </span>
+                  <button
+                    type="button"
+                    onClick={removeCoupon}
+                    className="text-muted-foreground hover:text-foreground"
+                    aria-label="Remove coupon"
+                  >
+                    <X className="size-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-1.5">
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Coupon code"
+                      value={couponInput}
+                      onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                      className="flex-1"
+                    />
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={applyCoupon}
+                      disabled={couponLoading || !couponInput.trim()}
+                    >
+                      {couponLoading ? <Loader2 className="size-4 animate-spin" /> : null}
+                      Apply
+                    </Button>
+                  </div>
+                  {couponError ? <p className="text-xs text-destructive">{couponError}</p> : null}
+                </div>
+              )}
+
+              <FareCard
+                fare={
+                  appliedCoupon
+                    ? {
+                        ...fareResult.fare,
+                        discount: appliedCoupon.discount,
+                        total: Math.max(fareResult.fare.total - appliedCoupon.discount, 0),
+                      }
+                    : fareResult.fare
+                }
+              />
+            </>
           ) : null}
         </div>
       ) : null}

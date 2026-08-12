@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { PageHero } from "@/components/shared/page-hero";
 import { Container } from "@/components/shared/container";
+import { ReferralCard } from "@/components/referrals/referral-card";
 import { createClient } from "@/lib/supabase/server";
+import { getMyReferralCode, getMyReferralHistory, getMyReferralRewardsTotal } from "@/lib/referrals/queries";
 import { ProfileForm } from "./profile-form";
 import type { UserRole } from "@/types";
 
@@ -45,11 +47,18 @@ export default async function ProfilePage() {
     createdAt: profile?.created_at ?? user.created_at,
   };
 
+  const [referralCode, referralHistory, rewardsTotal] = await Promise.all([
+    getMyReferralCode(),
+    getMyReferralHistory(user.id),
+    getMyReferralRewardsTotal(user.id),
+  ]);
+
   return (
     <>
       <PageHero eyebrow="Account" title="Your profile" description="Manage your personal details." />
-      <Container className="max-w-xl py-16">
+      <Container className="max-w-xl space-y-6 py-16">
         <ProfileForm userId={user.id} initial={initial} />
+        <ReferralCard code={referralCode} history={referralHistory} rewardsTotal={rewardsTotal} />
       </Container>
     </>
   );
