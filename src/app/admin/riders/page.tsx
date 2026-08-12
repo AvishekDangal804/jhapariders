@@ -35,7 +35,7 @@ export default async function AdminRidersPage({ searchParams }: PageProps<"/admi
     <Container className="max-w-5xl py-6 sm:py-8">
       <h1 className="text-xl font-bold sm:text-2xl">Riders</h1>
 
-      <div className="mt-4 flex gap-2">
+      <div className="mt-4 flex flex-wrap gap-2">
         {filters.map((f) => (
           <Button
             key={f.value}

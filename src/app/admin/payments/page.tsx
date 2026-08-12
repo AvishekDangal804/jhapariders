@@ -37,7 +37,7 @@ export default async function AdminPaymentsPage({ searchParams }: PageProps<"/ad
     <Container className="max-w-5xl py-6 sm:py-8">
       <h1 className="text-xl font-bold sm:text-2xl">Payments</h1>
 
-      <div className="mt-4 flex gap-2">
+      <div className="mt-4 flex flex-wrap gap-2">
         {filters.map((f) => (
           <Button key={f.value} variant={statusFilter === f.value ? "default" : "outline"} size="sm" asChild>
             <Link href={`/admin/payments${f.value === "all" ? "" : `?status=${f.value}`}`}>{f.label}</Link>

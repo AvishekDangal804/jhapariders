@@ -17,10 +17,14 @@ export const adminNav: DashboardNavItem[] = [
   { label: "Audit Logs", href: "/admin/audit-logs", icon: "FileClock" },
 ];
 
+// The bottom nav only shows the first 4 of these (DashboardShell reserves a
+// 5th slot for "More", which lists all 14 sections in adminNav) — an admin
+// checking their phone is most likely triaging something urgent, so
+// Emergencies/Support/Withdrawals get priority over the browsing-heavy
+// list pages (Users/Riders/Rides/Payments etc., still one tap away).
 export const adminMobileNav: DashboardNavItem[] = [
   adminNav[0],
-  adminNav[1],
-  adminNav[2],
-  adminNav[3],
-  adminNav[4],
+  adminNav.find((item) => item.href === "/admin/emergencies")!,
+  adminNav.find((item) => item.href === "/admin/support")!,
+  adminNav.find((item) => item.href === "/admin/withdrawals")!,
 ];

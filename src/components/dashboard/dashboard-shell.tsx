@@ -14,6 +14,7 @@ import {
   LayoutDashboard,
   LifeBuoy,
   MapPin,
+  MoreHorizontal,
   Package,
   Settings,
   ShieldCheck,
@@ -35,6 +36,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { LogoutMenuItem } from "@/components/site/logout-button";
 import { cn } from "@/lib/utils";
 import type { CurrentUser } from "@/lib/supabase/get-current-user";
@@ -98,7 +100,13 @@ export function DashboardShell({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const bottomItems = (mobileNavItems ?? navItems).slice(0, 5);
+  const preferred = mobileNavItems ?? navItems;
+  // The bottom nav only has room for a handful of tabs, but admin alone has
+  // 14 sections — reserve the last slot for a "More" sheet listing every
+  // item in `navItems` (not just the preferred/primary set) so nothing is
+  // ever unreachable below the lg: sidebar breakpoint.
+  const needsMore = preferred.length > 4 || navItems.length > preferred.length;
+  const bottomItems = needsMore ? preferred.slice(0, 4) : preferred;
 
   const isActive = (item: DashboardNavItem) =>
     item.exact ? pathname === item.href : pathname.startsWith(item.href);
@@ -138,7 +146,7 @@ export function DashboardShell({
         </div>
       </aside>
 
-      <div className="flex min-h-svh flex-1 flex-col">
+      <div className="flex min-h-svh min-w-0 flex-1 flex-col">
         {/* Mobile / shared top bar */}
         <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-background/95 px-4 backdrop-blur lg:justify-end lg:px-6">
           <Link href="/" className="lg:hidden" aria-label="JhapaRide home">
@@ -157,7 +165,7 @@ export function DashboardShell({
         {/* Mobile bottom nav */}
         <nav
           className="fixed inset-x-0 bottom-0 z-40 grid border-t bg-background/95 backdrop-blur lg:hidden"
-          style={{ gridTemplateColumns: `repeat(${bottomItems.length}, minmax(0, 1fr))` }}
+          style={{ gridTemplateColumns: `repeat(${bottomItems.length + (needsMore ? 1 : 0)}, minmax(0, 1fr))` }}
           aria-label="Dashboard"
         >
           {bottomItems.map((item) => {
@@ -177,6 +185,44 @@ export function DashboardShell({
               </Link>
             );
           })}
+          {needsMore ? (
+            <Sheet>
+              <SheetTrigger asChild>
+                <button
+                  type="button"
+                  className="flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium text-muted-foreground"
+                >
+                  <MoreHorizontal className="size-5" />
+                  More
+                </button>
+              </SheetTrigger>
+              <SheetContent side="bottom" className="max-h-[80svh] overflow-y-auto">
+                <SheetHeader>
+                  <SheetTitle>Menu</SheetTitle>
+                </SheetHeader>
+                <nav className="grid grid-cols-3 gap-2 px-4 pb-4" aria-label="All sections">
+                  {navItems.map((item) => {
+                    const Icon = ICONS[item.icon];
+                    const active = isActive(item);
+                    return (
+                      <SheetClose asChild key={item.href}>
+                        <Link
+                          href={item.href}
+                          className={cn(
+                            "flex flex-col items-center gap-1.5 rounded-lg border px-2 py-3 text-center text-xs font-medium",
+                            active ? "border-primary/40 bg-primary/10 text-primary" : "text-muted-foreground hover:bg-accent"
+                          )}
+                        >
+                          <Icon className="size-5" />
+                          {item.label}
+                        </Link>
+                      </SheetClose>
+                    );
+                  })}
+                </nav>
+              </SheetContent>
+            </Sheet>
+          ) : null}
         </nav>
       </div>
     </div>
