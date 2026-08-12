@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
-import { Bell } from "lucide-react";
-import Link from "next/link";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import { riderNav, riderMobileNav } from "@/config/rider-nav";
+import { getUnreadNotificationCount } from "@/lib/notifications/queries";
 import { requireRiderState } from "@/lib/supabase/require-rider";
 
 export default async function RiderDashboardLayout({ children }: { children: React.ReactNode }) {
@@ -12,19 +12,15 @@ export default async function RiderDashboardLayout({ children }: { children: Rea
     redirect("/rider/onboarding");
   }
 
+  const unreadCount = await getUnreadNotificationCount(state.user.id);
+
   return (
     <DashboardShell
       user={state.user}
       navItems={riderNav}
       mobileNavItems={riderMobileNav}
       headerRight={
-        <Link
-          href="/rider/notifications"
-          className="hidden rounded-full p-2 text-muted-foreground hover:bg-accent hover:text-foreground sm:flex"
-          aria-label="Notifications"
-        >
-          <Bell className="size-5" />
-        </Link>
+        <NotificationBell userId={state.user.id} href="/rider/notifications" initialUnreadCount={unreadCount} />
       }
     >
       {children}

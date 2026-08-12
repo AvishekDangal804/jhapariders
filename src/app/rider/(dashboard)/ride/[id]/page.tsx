@@ -1,14 +1,17 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { CheckCircle2, Clock3, Navigation, MapPin as MapPinIcon } from "lucide-react";
+import { CheckCircle2, Clock3, Navigation, MapPin as MapPinIcon, Star } from "lucide-react";
 import { Container } from "@/components/shared/container";
 import { MapView } from "@/components/shared/map-view";
+import { RatingForm } from "@/components/ratings/rating-form";
 import { RideStatusBadge } from "@/components/rides/ride-status-badge";
 import { CancelRideButton } from "@/components/rides/cancel-ride-button";
 import { RealtimeRideWatcher } from "@/components/rides/realtime-ride-watcher";
+import { SosButton } from "@/components/rides/sos-button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatNpr } from "@/lib/fare";
+import { getMyRatingForRide } from "@/lib/ratings/queries";
 import { requireRiderState } from "@/lib/supabase/require-rider";
 import { getRideById } from "@/lib/rides/queries";
 import { RideProgressActions } from "./ride-progress-actions";
@@ -27,6 +30,8 @@ export default async function RiderRideDetailPage({ params }: PageProps<"/rider/
 
   const fare = ride.finalFare ?? ride.estimatedFare;
   const canCancel = CANCELLABLE.includes(ride.status);
+  const inProgress = ["driver_assigned", "driver_arriving", "driver_arrived", "ride_started"].includes(ride.status);
+  const myRating = ride.status === "paid" ? await getMyRatingForRide(ride.id, state.user.id) : null;
 
   return (
     <Container className="max-w-lg py-6 sm:py-8">
@@ -60,14 +65,36 @@ export default async function RiderRideDetailPage({ params }: PageProps<"/rider/
           </CardContent>
         </Card>
       ) : ride.status === "paid" ? (
-        <Card className="mt-4 border-primary/30 bg-primary/5">
-          <CardContent className="flex items-center gap-3 py-4">
-            <CheckCircle2 className="size-5 shrink-0 text-primary" />
-            <p className="text-sm font-semibold">
-              Payment received{ride.riderShare != null ? ` — you earned ${formatNpr(ride.riderShare)}` : ""}.
-            </p>
-          </CardContent>
-        </Card>
+        <>
+          <Card className="mt-4 border-primary/30 bg-primary/5">
+            <CardContent className="flex items-center gap-3 py-4">
+              <CheckCircle2 className="size-5 shrink-0 text-primary" />
+              <p className="text-sm font-semibold">
+                Payment received{ride.riderShare != null ? ` — you earned ${formatNpr(ride.riderShare)}` : ""}.
+              </p>
+            </CardContent>
+          </Card>
+          {ride.passengerName ? (
+            myRating ? (
+              <Card className="mt-4">
+                <CardContent className="flex items-center gap-2 py-4 text-sm">
+                  <Star className="size-4 fill-amber-400 text-amber-400" />
+                  <span>
+                    You rated {ride.passengerName} {myRating.stars} star{myRating.stars === 1 ? "" : "s"}
+                    {myRating.review ? `: “${myRating.review}”` : ""}
+                  </span>
+                </CardContent>
+              </Card>
+            ) : (
+              <RatingForm
+                rideId={ride.id}
+                rateeId={ride.passengerId}
+                rateeName={ride.passengerName}
+                rateeLabel="passenger"
+              />
+            )
+          ) : null}
+        </>
       ) : null}
 
       {ride.passengerName ? (
@@ -118,6 +145,7 @@ export default async function RiderRideDetailPage({ params }: PageProps<"/rider/
 
       <div className="mt-4 space-y-3">
         <RideProgressActions rideId={ride.id} status={ride.status} />
+        {inProgress ? <SosButton rideId={ride.id} fallbackLat={ride.pickupLat} fallbackLng={ride.pickupLng} /> : null}
         {canCancel ? <CancelRideButton rideId={ride.id} /> : null}
       </div>
     </Container>

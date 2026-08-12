@@ -10,7 +10,10 @@ import { RealtimeRideWatcher } from "@/components/rides/realtime-ride-watcher";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { RatingForm } from "@/components/ratings/rating-form";
+import { SosButton } from "@/components/rides/sos-button";
 import { formatNpr } from "@/lib/fare";
+import { getMyRatingForRide } from "@/lib/ratings/queries";
 import { requireProfile } from "@/lib/supabase/require-profile";
 import { createClient } from "@/lib/supabase/server";
 import { getRideById } from "@/lib/rides/queries";
@@ -60,6 +63,9 @@ export default async function RideDetailPage({ params }: PageProps<"/passenger/r
     });
   }
 
+  const myRating = ride.status === "paid" ? await getMyRatingForRide(ride.id, user.id) : null;
+  const inProgress = ["driver_assigned", "driver_arriving", "driver_arrived", "ride_started"].includes(ride.status);
+
   return (
     <Container className="max-w-lg py-6 sm:py-8">
       <RealtimeRideWatcher rideId={ride.id} />
@@ -101,12 +107,29 @@ export default async function RideDetailPage({ params }: PageProps<"/passenger/r
       ) : null}
 
       {ride.status === "paid" ? (
-        <Card className="mt-4 border-primary/30 bg-primary/5">
-          <CardContent className="flex items-center gap-3 py-4">
-            <CheckCircle2 className="size-5 shrink-0 text-primary" />
-            <p className="text-sm font-semibold">Ride completed. Thanks for riding with JhapaRide!</p>
-          </CardContent>
-        </Card>
+        <>
+          <Card className="mt-4 border-primary/30 bg-primary/5">
+            <CardContent className="flex items-center gap-3 py-4">
+              <CheckCircle2 className="size-5 shrink-0 text-primary" />
+              <p className="text-sm font-semibold">Ride completed. Thanks for riding with JhapaRide!</p>
+            </CardContent>
+          </Card>
+          {ride.riderId && ride.riderName ? (
+            myRating ? (
+              <Card className="mt-4">
+                <CardContent className="flex items-center gap-2 py-4 text-sm">
+                  <Star className="size-4 fill-amber-400 text-amber-400" />
+                  <span>
+                    You rated {ride.riderName} {myRating.stars} star{myRating.stars === 1 ? "" : "s"}
+                    {myRating.review ? `: “${myRating.review}”` : ""}
+                  </span>
+                </CardContent>
+              </Card>
+            ) : (
+              <RatingForm rideId={ride.id} rateeId={ride.riderId} rateeName={ride.riderName} rateeLabel="rider" />
+            )
+          ) : null}
+        </>
       ) : ride.status === "ride_completed" ? (
         <PaymentActions rideId={ride.id} fare={fare ?? 0} />
       ) : statusMessage ? (
@@ -164,9 +187,12 @@ export default async function RideDetailPage({ params }: PageProps<"/passenger/r
         </CardContent>
       </Card>
 
-      {canCancel ? (
-        <div className="mt-4">
-          <CancelRideButton rideId={ride.id} />
+      {canCancel || inProgress ? (
+        <div className="mt-4 space-y-3">
+          {inProgress ? (
+            <SosButton rideId={ride.id} fallbackLat={ride.pickupLat} fallbackLng={ride.pickupLng} />
+          ) : null}
+          {canCancel ? <CancelRideButton rideId={ride.id} /> : null}
         </div>
       ) : null}
     </Container>

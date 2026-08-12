@@ -8,7 +8,7 @@ export async function NotificationsPageContent({ userId }: { userId: string }) {
   return (
     <Container className="max-w-lg py-6 sm:py-8">
       <h1 className="text-lg font-semibold">Notifications</h1>
-      <NotificationList initial={notifications} />
+      <NotificationList userId={userId} initial={notifications} />
     </Container>
   );
 }

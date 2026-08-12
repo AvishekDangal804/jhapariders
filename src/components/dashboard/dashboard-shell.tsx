@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  AlertTriangle,
   Bell,
   Bike,
   Car,
@@ -11,6 +12,7 @@ import {
   FileClock,
   Home,
   LayoutDashboard,
+  LifeBuoy,
   MapPin,
   Package,
   Settings,
@@ -41,6 +43,7 @@ import type { CurrentUser } from "@/lib/supabase/get-current-user";
 // reference. Icons are looked up by name in this client-only registry
 // instead, which keeps the boundary crossing to plain strings.
 const ICONS = {
+  AlertTriangle,
   Bell,
   Bike,
   Car,
@@ -48,6 +51,7 @@ const ICONS = {
   CreditCard,
   FileClock,
   Home,
+  LifeBuoy,
   MapPin,
   Package,
   Settings,

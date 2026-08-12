@@ -77,6 +77,10 @@ export type PlatformStatus = "online" | "maintenance" | "offline";
 
 export type CouponDiscountType = "flat" | "percentage";
 
+export type ReportStatus = "open" | "investigating" | "resolved" | "dismissed";
+
+export type EmergencyStatus = "active" | "acknowledged" | "resolved";
+
 export interface GeoPoint {
   lat: number;
   lng: number;
@@ -139,4 +143,61 @@ export interface Profile {
   address: string | null;
   status: UserStatus;
   createdAt: string;
+}
+
+export interface Notification {
+  id: string;
+  userId: string;
+  type: NotificationType;
+  title: string;
+  body: string | null;
+  data: Record<string, unknown> | null;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export interface Rating {
+  id: string;
+  rideId: string;
+  raterId: string;
+  rateeId: string;
+  stars: number;
+  review: string | null;
+  createdAt: string;
+}
+
+export interface SupportTicket {
+  id: string;
+  userId: string;
+  category: SupportCategory;
+  subject: string;
+  description: string;
+  status: SupportTicketStatus;
+  rideId: string | null;
+  assignedTo: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SupportMessage {
+  id: string;
+  ticketId: string;
+  senderId: string;
+  senderName: string | null;
+  isAdmin: boolean;
+  message: string;
+  createdAt: string;
+}
+
+export interface EmergencyEvent {
+  id: string;
+  rideId: string;
+  userId: string;
+  userName: string | null;
+  lat: number;
+  lng: number;
+  description: string | null;
+  status: EmergencyStatus;
+  createdAt: string;
+  resolvedAt: string | null;
 }

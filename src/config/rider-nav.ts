@@ -7,6 +7,7 @@ export const riderNav: DashboardNavItem[] = [
   { label: "Earnings", href: "/rider/earnings", icon: "Star" },
   { label: "Wallet", href: "/rider/wallet", icon: "Wallet" },
   { label: "Documents", href: "/rider/documents", icon: "Package" },
+  { label: "Support", href: "/rider/support", icon: "LifeBuoy" },
 ];
 
 export const riderMobileNav: DashboardNavItem[] = [
