@@ -44,7 +44,7 @@ function DemoMapView({ markers = [], bounds, className }: MapViewProps) {
   return (
     <div
       className={cn(
-        "relative aspect-[4/3] w-full overflow-hidden rounded-2xl border bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950 dark:to-emerald-900",
+        "relative aspect-[4/3] w-full overflow-hidden rounded-2xl border bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900",
         className
       )}
       role="img"

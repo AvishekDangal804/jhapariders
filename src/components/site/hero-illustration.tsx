@@ -7,7 +7,7 @@ import { Bike, Star } from "lucide-react";
 export function HeroIllustration() {
   return (
     <div className="relative mx-auto aspect-[4/5] w-full max-w-md sm:aspect-square">
-      <div className="absolute inset-0 overflow-hidden rounded-[2rem] border bg-gradient-to-br from-emerald-50 via-white to-emerald-100 shadow-2xl dark:from-emerald-950 dark:via-background dark:to-emerald-900">
+      <div className="absolute inset-0 overflow-hidden rounded-[2rem] border bg-gradient-to-br from-blue-50 via-white to-blue-100 shadow-2xl dark:from-blue-950 dark:via-background dark:to-blue-900">
         <svg
           viewBox="0 0 100 100"
           className="absolute inset-0 h-full w-full opacity-40"

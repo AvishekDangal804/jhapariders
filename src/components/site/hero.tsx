@@ -8,7 +8,7 @@ export function Hero() {
   return (
     <section className="relative overflow-hidden">
       <div
-        className="pointer-events-none absolute inset-x-0 -top-40 -z-10 h-140 bg-[radial-gradient(60%_60%_at_50%_0%,var(--color-emerald-100),transparent)] dark:bg-[radial-gradient(60%_60%_at_50%_0%,var(--color-emerald-950),transparent)]"
+        className="pointer-events-none absolute inset-x-0 -top-40 -z-10 h-140 bg-[radial-gradient(60%_60%_at_50%_0%,var(--color-blue-100),transparent)] dark:bg-[radial-gradient(60%_60%_at_50%_0%,var(--color-blue-950),transparent)]"
         aria-hidden="true"
       />
       <Container className="grid items-center gap-12 py-16 sm:py-20 lg:grid-cols-2 lg:py-28">
